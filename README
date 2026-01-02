@@ -1,0 +1,309 @@
+# Indiana Gateway Data Scraper for Mark Benchmarking
+
+This system scrapes public financial data from Indiana Gateway to build real-world benchmarks for Mark's municipality benefits cost analysis.
+
+## 🎯 Goal
+
+Transform Mark from using "industry estimates" to using **actual reported data from 50+ Indiana municipalities**, making recommendations like:
+
+> "Based on Indiana Gateway public data from 47 municipalities, cities with 250-350 employees spend a median of $875/month on benefits. AIM's $1,050/month would be 20% above this benchmark."
+
+## 📊 Data Source
+
+**Indiana Gateway for Government Units**  
+URL: https://gateway.ifionline.org
+
+- **Reliability**: HIGH - State-verified actual disbursements
+- **Data Type**: Annual Financial Reports (AFR) - Disbursements
+- **Coverage**: All Indiana municipalities, counties, schools
+- **Update Frequency**: Annual
+- **Public Access**: Yes, downloadable pipe-delimited files
+
+## 🛠️ System Components
+
+### 1. Manual Download + Parser (Recommended First)
+
+**Best for**: Getting started quickly, understanding the data
+
+```bash
+# Step 1: Manual download from Gateway
+# Visit: https://gateway.ifionline.org/public/download.aspx
+# Download: "Disbursements by Fund and Department"
+# - Unit Type: City/Town
+# - Year: 2024, 2023, 2022
+# Save to: ./gateway_data/raw/
+
+# Step 2: Parse the files
+python gateway_parser.py --input ./gateway_data/raw --output ./gateway_data/parsed
+```
+
+### 2. Automated Downloader (Advanced)
+
+**Best for**: Regular updates, scaling to many files
+
+```bash
+# Install dependencies
+pip install selenium webdriver-manager --break-system-packages
+
+# First, inspect the page structure
+python gateway_auto_downloader.py --inspect
+
+# Then download all configured files
+python gateway_auto_downloader.py --headless --output ./gateway_data/raw
+```
+
+### 3. Full Scraper (Complete System)
+
+```bash
+# Run the complete pipeline
+python indiana_gateway_scraper.py
+```
+
+## 📁 Directory Structure
+
+```
+.
+├── indiana_gateway_scraper.py   # Main orchestrator
+├── gateway_parser.py             # Parses downloaded files
+├── gateway_auto_downloader.py    # Selenium auto-downloader
+├── gateway_data/
+│   ├── raw/                      # Downloaded pipe-delimited files
+│   └── parsed/                   # Processed JSON for Mark
+│       └── gateway_benchmark_data.json
+└── README.md
+```
+
+## 🔍 What Gets Extracted
+
+From each municipality's financial reports:
+
+1. **Total Benefits Costs**
+   - Health insurance
+   - Retirement (PERF)
+   - Dental/vision
+   - Life insurance
+   - Other benefits
+
+2. **Per-Employee Metrics**
+   - Monthly cost per employee
+   - Annual cost per employee
+   - Breakdown by category
+
+3. **Benchmarking Data**
+   - By municipality size (employee count)
+   - By year
+   - Percentile distributions (25th, 50th, 75th, 90th)
+
+## 📋 Output Format
+
+```json
+{
+  "source": "Indiana Gateway for Government Units",
+  "last_updated": "2024-12-29",
+  "total_municipalities": 47,
+  "municipalities": [
+    {
+      "name": "Indianapolis",
+      "year": "2024",
+      "total_annual_benefits": 5400000,
+      "estimated_employees": 514,
+      "monthly_per_employee_estimate": 875.00,
+      "breakdown": {
+        "health_insurance": 3500000,
+        "retirement": 1200000,
+        "dental_vision": 450000,
+        "other": 250000
+      }
+    }
+  ],
+  "summary_statistics": {
+    "monthly_per_employee": {
+      "min": 650.00,
+      "25th_percentile": 825.00,
+      "median": 875.00,
+      "75th_percentile": 920.00,
+      "90th_percentile": 985.00,
+      "max": 1150.00
+    }
+  }
+}
+```
+
+## 🔗 Integration with Mark
+
+Once you have `gateway_benchmark_data.json`:
+
+### Option A: Add to Mark's System Prompt
+
+```
+You have access to real benchmarking data from Indiana Gateway:
+[Load gateway_benchmark_data.json]
+
+When answering questions about benefits costs:
+1. Reference actual data: "Indiana public data shows..."
+2. Provide specific percentiles
+3. Compare user's costs to real benchmarks
+4. Cite the source
+```
+
+### Option B: Dynamic Loading (Best)
+
+Update Mark to:
+1. Load the JSON file at startup
+2. Query it for relevant municipality size ranges
+3. Calculate real-time comparisons
+4. Update benchmarks as new data arrives
+
+## 🎯 Quick Start (Step-by-Step)
+
+### Method 1: Manual Download (Fastest)
+
+1. **Download Data** (5 minutes)
+   ```
+   Visit: https://gateway.ifionline.org/public/download.aspx
+   
+   Select:
+   - Data Set: "Annual Financial Reports"
+   - File: "Disbursements by Fund and Department"
+   - Unit Type: "City/Town"
+   - Year: "2024"
+   
+   Click Download → Save to ./gateway_data/raw/
+   
+   Repeat for years 2023, 2022
+   ```
+
+2. **Parse Data** (1 minute)
+   ```bash
+   python gateway_parser.py
+   ```
+
+3. **Review Output** (2 minutes)
+   ```bash
+   cat ./gateway_data/parsed/gateway_benchmark_data.json | head -50
+   ```
+
+4. **Feed to Mark** (5 minutes)
+   - Add JSON to Mark's knowledge base
+   - Update system prompt with benchmarking logic
+   - Test with sample queries
+
+### Method 2: Automated Download (Requires Selenium)
+
+1. **Install Dependencies**
+   ```bash
+   pip install selenium webdriver-manager --break-system-packages
+   ```
+
+2. **Inspect Page** (First time only)
+   ```bash
+   python gateway_auto_downloader.py --inspect
+   ```
+   - This shows you the form structure
+   - Verify element IDs match the code
+
+3. **Download All Files**
+   ```bash
+   python gateway_auto_downloader.py --headless
+   ```
+
+4. **Parse and Integrate**
+   ```bash
+   python gateway_parser.py
+   ```
+
+## 📈 Expected Results
+
+After processing, you should have:
+
+- **40-60 municipalities** with benefits data
+- **3 years** of historical data (2022-2024)
+- **Real benchmarks** for:
+  - Small cities (<100 employees): $800-900/month
+  - Medium cities (100-300): $850-950/month
+  - Large cities (300-500): $875-1000/month
+  - Very large (>500): $900-1050/month
+
+## 🚀 Next Steps
+
+1. **Validate the data**
+   - Spot-check against known municipalities
+   - Verify calculations make sense
+   - Compare to AIM's actual rates
+
+2. **Expand coverage**
+   - Add county data
+   - Include school corporations
+   - Track multiple years
+
+3. **Integrate with Mark**
+   - Update system prompt
+   - Add dynamic benchmarking
+   - Test with real scenarios
+
+4. **Set up regular updates**
+   - Schedule monthly downloads
+   - Automated parsing pipeline
+   - Version control for data
+
+## 🔧 Troubleshooting
+
+### Parser finds no data
+- Check file format (should be pipe-delimited)
+- Verify column names match expectations
+- Try different encodings (latin-1, utf-8)
+
+### Selenium can't find elements
+- Run with `--inspect` to see actual element IDs
+- Update element selectors in code
+- Check if Gateway page structure changed
+
+### Employee counts seem wrong
+- Parser estimates from benefits totals
+- Typical range: $9,600-12,000/employee/year
+- Verify against known cities
+
+## 📞 Support
+
+Questions? Issues? Improvements?
+
+- Email Gateway support: Gateway@dlgf.in.gov
+- Indiana DLGF: https://www.in.gov/dlgf/
+- File layout docs: Available on download page
+
+## 📝 Notes
+
+- **Data Quality**: State-verified, highly reliable
+- **Update Frequency**: Annual (municipalities report yearly)
+- **Coverage**: 400+ municipalities in Indiana
+- **Privacy**: All data is public, no PII
+- **Terms**: Public domain, freely usable
+
+## 🎓 Learning Resources
+
+1. **Gateway Documentation**
+   - https://gateway.ifionline.org/public/help.aspx
+
+2. **File Layout Guides**
+   - AFR: https://gateway.ifionline.org/guides/downloads/FileLayoutDocumentation_AFR.xls
+   - Budgets: https://gateway.ifionline.org/guides/downloads/FileLayoutDocumentation_budgets.xls
+
+3. **Indiana Financial Management**
+   - DLGF Resources: https://www.in.gov/dlgf/
+
+---
+
+## ✅ Success Metrics
+
+You'll know this is working when Mark can say:
+
+✅ "Based on data from 47 Indiana municipalities..."  
+✅ "The median for cities your size is $875/month..."  
+✅ "You're in the 60th percentile for benefits costs..."  
+✅ "AIM's rate is 18% above the statewide median..."  
+
+Instead of:
+
+❌ "Industry estimates suggest..."  
+❌ "Typical benefits costs are..."  
+❌ "Based on general benchmarks..."
