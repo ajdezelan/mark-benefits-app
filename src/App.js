@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, MessageSquare, Heart, TrendingUp, GraduationCap, Menu, X, CheckCircle, AlertCircle, DollarSign, ArrowRight, Users, Shield, Calculator, Download, Mail, Calendar, FileText, Clock } from 'lucide-react';
+import { BarChart3, MessageSquare, Heart, TrendingUp, Menu, X, CheckCircle, DollarSign, ArrowRight, Shield, Calculator, Download, Mail, Calendar, FileText, Clock } from 'lucide-react';
 
 // Export utility functions
 const downloadPDF = (results) => {
@@ -1382,7 +1382,5 @@ const EnrollmentTimeline = () => {
     </div>
   );
 };
-
-export default MarkApp;
 
 export default MarkApp;
