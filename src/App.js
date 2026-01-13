@@ -352,9 +352,13 @@ Keep responses concise but informative. If asked about specific calculations, en
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
+      const errorMessage = error.message.includes('API key not configured')
+        ? "🔧 Chat API Setup Required\n\nTo enable the AI chatbot:\n1. Get your API key from https://console.anthropic.com/\n2. Add it to the .env file: ANTHROPIC_API_KEY=your_key\n3. Run with: vercel dev (or deploy to Vercel)\n\nFor now, you can use the other calculators and tools!"
+        : error.message || "Oops! I'm having trouble connecting right now. Make sure the API is configured and running with 'vercel dev'.";
+
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "Oops! I'm having trouble connecting right now. Please try again in a moment."
+        content: errorMessage
       }]);
     } finally {
       setIsLoading(false);
